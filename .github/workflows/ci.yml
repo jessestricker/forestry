@@ -1,0 +1,43 @@
+name: Continuous Integration
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+    branches: [main]
+
+jobs:
+  lint:
+    name: Run the clippy linter
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      security-events: write
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          toolchain: stable
+          profile: minimal
+          components: clippy
+          override: true
+
+      - name: Install analysis dependencies
+        run: cargo install clippy-sarif sarif-fmt
+
+      - name: Run clippy
+        continue-on-error: true
+        run: |
+          cargo clippy
+          --all-targets --all-features
+          --message-format=json
+          | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
+
+      - name: Upload analysis results
+        uses: github/codeql-action/upload-sarif@v1
+        with:
+          sarif_file: rust-clippy-results.sarif
+          wait-for-processing: true
