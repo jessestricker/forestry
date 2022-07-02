@@ -30,7 +30,7 @@ jobs:
 
       - name: Run clippy
         continue-on-error: true
-        run: |
+        run: >
           cargo clippy
           --all-targets --all-features
           --message-format=json
