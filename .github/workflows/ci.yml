@@ -8,7 +8,7 @@ on:
 
 jobs:
   lint:
-    name: Run the clippy linter
+    name: Run the Clippy linter
     runs-on: ubuntu-latest
     permissions:
       contents: read
@@ -25,10 +25,21 @@ jobs:
           components: clippy
           override: true
 
+      - name: Cache Cargo dependencies
+        uses: actions/cache@v3
+        with:
+          path: |
+            ~/.cargo/bin/
+            ~/.cargo/registry/index/
+            ~/.cargo/registry/cache/
+            ~/.cargo/git/db/
+            target/
+          key: ${{ runner.os }}-cargo-${{ hashFiles('**/Cargo.lock') }}
+
       - name: Install analysis dependencies
         run: cargo install clippy-sarif sarif-fmt
 
-      - name: Run clippy
+      - name: Run Clippy
         continue-on-error: true
         run: >
           cargo clippy
