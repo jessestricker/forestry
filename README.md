@@ -1,3 +1,3 @@
 # forestry
 
-🌳 Keep your project directory tree in shape!
+🌳 Keep your project directory trees in shape!
