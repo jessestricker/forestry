@@ -30,9 +30,6 @@ jobs:
   lint:
     name: Run the Clippy linter
     runs-on: ubuntu-latest
-    permissions:
-      contents: read
-      security-events: write
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -42,25 +39,14 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-          components: clippy
           override: true
+          components: clippy
 
-      - name: Install analysis dependencies
-        run: cargo install clippy-sarif sarif-fmt
-
-      - name: Run Clippy
-        continue-on-error: true
-        run: >
-          cargo clippy
-          --all-targets --all-features
-          --message-format=json
-          | clippy-sarif | tee rust-clippy-results.sarif | sarif-fmt
-
-      - name: Upload analysis results
-        uses: github/codeql-action/upload-sarif@v2
+      - name: Run Clippy via Cargo
+        uses: actions-rs/cargo@v1
         with:
-          sarif_file: rust-clippy-results.sarif
-          wait-for-processing: true
+          command: clippy
+          args: --all-targets --all-features -- -D warnings
 
   format:
     name: Run the Rustfmt formatter
@@ -74,8 +60,8 @@ jobs:
         with:
           toolchain: stable
           profile: minimal
-          components: rustfmt
           override: true
+          components: rustfmt
 
       - name: Run Rustfmt via Cargo
         uses: actions-rs/cargo@v1
