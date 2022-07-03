@@ -7,6 +7,26 @@ on:
     branches: [main]
 
 jobs:
+  test:
+    name: Build and test the code
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Test via Cargo
+        uses: actions-rs/cargo@v1
+        with:
+          command: test
+          args: --all-targets --all-features
+
   lint:
     name: Run the Clippy linter
     runs-on: ubuntu-latest
@@ -68,4 +88,7 @@ jobs:
           override: true
 
       - name: Run Rustfmt via Cargo
-        run: cargo fmt --check --all
+        uses: actions-rs/cargo@v1
+        with:
+          command: fmt
+          args: --check --all
