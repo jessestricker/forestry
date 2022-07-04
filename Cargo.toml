@@ -4,3 +4,9 @@ version = "0.1.0"
 authors = ["Jesse Stricker"]
 edition = "2021"
 description = "🌳 Keep your project directory trees in shape!"
+
+[dependencies]
+clap = { version = "3.2.8", features = ["derive"] }
+clap-verbosity-flag = "1.0.1"
+env_logger = "0.9.0"
+log = "0.4.17"
