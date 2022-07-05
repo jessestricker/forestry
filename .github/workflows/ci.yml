@@ -8,7 +8,7 @@ on:
 
 jobs:
   test:
-    name: Build and test the code
+    name: Build & Test
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -37,7 +37,7 @@ jobs:
           args: --all-targets --all-features
 
   lint:
-    name: Run the Clippy linter
+    name: Lint
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
@@ -61,7 +61,7 @@ jobs:
           args: --all-targets --all-features -- -D warnings
 
   format:
-    name: Run the Rustfmt formatter
+    name: Format
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
