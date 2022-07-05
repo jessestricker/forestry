@@ -4,6 +4,11 @@ version = "0.1.0"
 authors = ["Jesse Stricker"]
 edition = "2021"
 description = "🌳 Keep your project directory trees in shape!"
+homepage = "https://github.com/jessestricker/forestry"
+repository = "https://github.com/jessestricker/forestry"
+license = "MIT"
+categories = ["command-line-utilities", "development-tools"]
+publish = false
 
 [dependencies]
 clap = { version = "3.2.8", features = ["derive"] }
