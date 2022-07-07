@@ -64,3 +64,9 @@ jobs:
 
       - name: Display build artifacts
         run: ls -R
+
+      - name: Create GitHub release
+        uses: softprops/action-gh-release@v1
+        with:
+          draft: true
+          files: *
