@@ -45,5 +45,5 @@ jobs:
       - name: Publish build artifact
         uses: actions/upload-artifact@v3
         with:
-          name: forestry-${{ runner.os }}-${{ runner.arch }}
+          name: forestry-${{ github.ref_name }}-${{ runner.os }}-${{ runner.arch }}
           path: ./target/dist/bin
