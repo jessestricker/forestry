@@ -68,6 +68,11 @@ jobs:
         uses: actions/download-artifact@v3
         id: download
 
+      - name: Create ZIP archives
+        run: >
+          find '.' -mindepth 1 -maxdepth 1 -type d -exec
+          zip -j '{}' '{}/*' \;
+
       - name: Display build artifacts
         run: tree
 
@@ -75,4 +80,4 @@ jobs:
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: ${{ steps.download.outputs.download-path }}
+          files: "*.zip"
