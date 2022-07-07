@@ -59,17 +59,20 @@ jobs:
     needs: build
     runs-on: ubuntu-latest
     steps:
+      - name: Install additional tools
+        run: |
+          sudo apt-get update
+          sudo apt-get install tree
+
       - name: Download build artifacts
         uses: actions/download-artifact@v3
+        id: download
 
       - name: Display build artifacts
-        run: |
-          echo 'ARTIFACT_FILES<<EOF' >> $GITHUB_ENV
-          ls -1 >> $GITHUB_ENV
-          echo 'EOF' >> $GITHUB_ENV
+        run: tree
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: ${{ env.ARTIFACT_FILES }}
+          files: ${{ steps.download.outputs.download-path }}
