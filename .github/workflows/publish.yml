@@ -1,0 +1,45 @@
+name: Publish
+
+on:
+  push:
+    tags: ["v[0-9]+.[0-9]+.[0-9]+**"]
+  workflow_dispatch:
+
+jobs:
+  publish:
+    name: Build & Publish
+    strategy:
+      matrix:
+        os: [ubuntu-latest, windows-latest, macos-latest]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: actions-rs/toolchain@v1
+        with:
+          profile: minimal
+          toolchain: stable
+          override: true
+
+      - name: Cache Rust dependencies
+        uses: Swatinem/rust-cache@v1
+
+      - name: Build via Cargo
+        uses: actions-rs/cargo@v1
+        with:
+          command: build
+          args: --bins --all-features --release --verbose --locked
+
+      - name: Install via Cargo
+        uses: actions-rs/cargo@v1
+        with:
+          command: install
+          args: --path=. --no-track --root=./target/dist --all-features --locked --verbose
+
+      - name: Publish build artifact
+        uses: actions/upload-artifact@v3
+        with:
+          name: forestry-${{ runner.os }}-${{ runner.arch }}
+          path: ./target/dist/bin
