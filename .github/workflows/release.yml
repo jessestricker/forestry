@@ -1,4 +1,4 @@
-name: Publish
+name: Release
 
 on:
   push:
@@ -6,8 +6,8 @@ on:
   workflow_dispatch:
 
 jobs:
-  publish:
-    name: Build & Publish
+  build:
+    name: Build & Upload
     strategy:
       matrix:
         target:
@@ -48,7 +48,7 @@ jobs:
           command: install
           args: --path=. --no-track --root=./target/dist --all-features --target=${{ matrix.target }} --locked --verbose
 
-      - name: Publish build artifact
+      - name: Upload build artifact
         uses: actions/upload-artifact@v3
         with:
           name: forestry-${{ github.ref_name }}-${{ runner.os }}-${{ runner.arch }}
