@@ -63,10 +63,13 @@ jobs:
         uses: actions/download-artifact@v3
 
       - name: Display build artifacts
-        run: ls -R
+        run: |
+          echo 'ARTIFACT_FILES<<EOF' >> $GITHUB_ENV
+          ls -1 >> $GITHUB_ENV
+          echo 'EOF' >> $GITHUB_ENV
 
       - name: Create GitHub release
         uses: softprops/action-gh-release@v1
         with:
           draft: true
-          files: "*"
+          files: ${{ env.ARTIFACT_FILES }}
