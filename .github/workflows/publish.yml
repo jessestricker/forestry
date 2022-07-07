@@ -10,8 +10,11 @@ jobs:
     name: Build & Publish
     strategy:
       matrix:
-        os: [ubuntu-latest, windows-latest, macos-latest]
-    runs-on: ${{ matrix.os }}
+        target:
+          - x86_64-unknown-linux-gnu
+          - x86_64-pc-windows-msvc
+          - x86_64-apple-darwin
+    runs-on: ubuntu-latest
     steps:
       - name: Checkout code
         uses: actions/checkout@v3
@@ -21,6 +24,7 @@ jobs:
         with:
           profile: minimal
           toolchain: stable
+          target: ${{ matrix.target }}
           override: true
 
       - name: Cache Rust dependencies
@@ -30,13 +34,13 @@ jobs:
         uses: actions-rs/cargo@v1
         with:
           command: build
-          args: --bins --all-features --release --verbose --locked
+          args: --bins --all-features --target=${{ matrix.target }} --release --verbose --locked
 
       - name: Install via Cargo
         uses: actions-rs/cargo@v1
         with:
           command: install
-          args: --path=. --no-track --root=./target/dist --all-features --locked --verbose
+          args: --path=. --no-track --root=./target/dist --all-features --target=${{ matrix.target }} --locked --verbose
 
       - name: Publish build artifact
         uses: actions/upload-artifact@v3
