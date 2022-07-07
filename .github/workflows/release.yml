@@ -70,9 +70,10 @@ jobs:
 
       - name: Create ZIP archives
         run: |
+          set -x
           dirs=$(find '.' -mindepth 1 -maxdepth 1 -type d)
           for dir in $dirs; do
-            zip -j "$(basename "$dir")".zip "$dir/*"
+            zip -r -j "$(basename "$dir").zip" "$dir"
           done
 
       - name: Display build artifacts
