@@ -27,9 +27,6 @@ jobs:
           target: ${{ matrix.target }}
           override: true
 
-      - name: Cache Rust dependencies
-        uses: Swatinem/rust-cache@v1
-
       - name: Build via Cargo
         uses: actions-rs/cargo@v1
         with:
