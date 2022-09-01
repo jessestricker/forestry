@@ -1,0 +1,5 @@
+[package]
+name = "forestry"
+version = "0.1.0"
+authors = ["Jesse Stricker"]
+edition = "2021"
