@@ -31,8 +31,11 @@ impl Config {
     }
 
     /// Finds the config file in the given directory or any of its parent directories, recursively.
-    pub fn find(dir: &Path) -> Option<PathBuf> {
-        Self::check_dir(dir).or_else(|| dir.parent().and_then(Self::find))
+    /// Returns the directory and config file paths or `None`, if not found.
+    pub fn find(dir: &Path) -> Option<(PathBuf, PathBuf)> {
+        Self::check_dir(dir)
+            .map(|file| (dir.to_owned(), file))
+            .or_else(|| dir.parent().and_then(Self::find))
     }
 
     /// Returns the path to a config file in the given directory,

@@ -1,14 +1,19 @@
-use std::env;
+use std::fmt::Write as _;
+use std::path::PathBuf;
+use std::process::ExitCode;
 
+use anyhow::Context;
 use clap::{ArgAction, Args, Parser, ValueEnum};
-use log::info;
+use log::{error, trace};
 
-use forestry::config::Config;
+use forestry::project::Project;
 
 /// 🌳 Keep your project directory trees in shape!
 #[derive(Parser, Debug)]
 #[clap(version, author)]
 struct Cli {
+    root_dir: Option<PathBuf>,
+
     #[clap(flatten)]
     logger_config: LoggerConfig,
 }
@@ -63,25 +68,34 @@ impl LoggerConfig {
 
 fn setup_cli() -> Cli {
     let args: Cli = Cli::parse();
-
     env_logger::Builder::new()
         .filter_level(args.logger_config.level_filter())
         .write_style(args.logger_config.write_style())
         .format_timestamp(None)
         .format_target(false)
         .init();
-
     args
 }
 
-fn main() {
-    setup_cli();
+fn try_main() -> anyhow::Result<()> {
+    let cli = setup_cli();
+    trace!("cli = {:#?}", &cli);
 
-    let project_dir = env::current_dir().expect("current directory should be accessible");
-    let config_file =
-        Config::find(&project_dir).expect("current directory should contain a config file");
-    info!("config file: {:?}", config_file);
+    let project = Project::load(cli.root_dir).context("failed to load project")?;
+    trace!("project = {:#?}", &project);
 
-    let config = Config::load(&config_file).expect("config file should be loadable");
-    info!("config: {:#?}", config);
+    Ok(())
+}
+
+fn main() -> ExitCode {
+    if let Err(err) = try_main() {
+        let mut err_msg = err.to_string();
+        err.chain().skip(1).for_each(|source| {
+            write!(err_msg, "\ncause: {}", source).unwrap();
+        });
+
+        error!("{}", err_msg);
+        return ExitCode::FAILURE;
+    }
+    ExitCode::SUCCESS
 }
