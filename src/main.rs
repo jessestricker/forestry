@@ -1,3 +1,81 @@
+use clap::{ArgAction, Args, Parser, ValueEnum};
+use log::{debug, error, info, trace, warn};
+
+/// 🌳 Keep your project directory trees in shape!
+#[derive(Debug, Parser)]
+#[clap(version, author)]
+struct Cli {
+    #[clap(flatten)]
+    logger_config: LoggerConfig,
+}
+
+#[derive(Args, Debug)]
+struct LoggerConfig {
+    /// Increase the logging level with each occurrence.
+    #[clap(action=ArgAction::Count, short = 'v', long = "verbose")]
+    verbose: u8,
+
+    /// Decrease the logging level with each occurrence.
+    #[clap(action=ArgAction::Count, short = 'q', long = "quiet")]
+    quiet: u8,
+
+    /// Set whether the terminal output includes color.
+    #[clap(long = "color", value_enum, default_value_t)]
+    color: ColorMode,
+}
+
+#[derive(ValueEnum, Clone, Debug, Default)]
+enum ColorMode {
+    #[default]
+    Auto,
+    Always,
+    Never,
+}
+
+impl LoggerConfig {
+    const DEFAULT_LEVEL_FILTER: log::LevelFilter = log::LevelFilter::Info;
+
+    pub fn level_filter(&self) -> log::LevelFilter {
+        let default_index = log::LevelFilter::iter()
+            .enumerate()
+            .find(|x| x.1 == Self::DEFAULT_LEVEL_FILTER)
+            .expect("default log level should be in list off all log levels")
+            .0;
+        let index = default_index as i16 + self.verbose as i16 - self.quiet as i16;
+        log::LevelFilter::iter()
+            .nth(index.max(0) as usize)
+            .unwrap_or_else(log::LevelFilter::max)
+    }
+
+    pub fn write_style(&self) -> env_logger::WriteStyle {
+        use env_logger::WriteStyle;
+        match self.color {
+            ColorMode::Auto => WriteStyle::Auto,
+            ColorMode::Always => WriteStyle::Always,
+            ColorMode::Never => WriteStyle::Never,
+        }
+    }
+}
+
+fn setup_cli() -> Cli {
+    let args: Cli = Cli::parse();
+
+    env_logger::Builder::new()
+        .filter_level(args.logger_config.level_filter())
+        .write_style(args.logger_config.write_style())
+        .format_timestamp(None)
+        .format_target(false)
+        .init();
+
+    args
+}
+
 fn main() {
-    println!("{}", forestry::GREETING);
+    setup_cli();
+
+    trace!("trace");
+    debug!("debug");
+    info!("{}", forestry::GREETING);
+    warn!("warn");
+    error!("error");
 }
