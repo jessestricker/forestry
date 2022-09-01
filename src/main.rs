@@ -2,7 +2,7 @@ use clap::{ArgAction, Args, Parser, ValueEnum};
 use log::{debug, error, info, trace, warn};
 
 /// 🌳 Keep your project directory trees in shape!
-#[derive(Debug, Parser)]
+#[derive(Parser, Debug)]
 #[clap(version, author)]
 struct Cli {
     #[clap(flatten)]
