@@ -1,5 +1,9 @@
+use std::env;
+
 use clap::{ArgAction, Args, Parser, ValueEnum};
-use log::{debug, error, info, trace, warn};
+use log::info;
+
+use forestry::config::Config;
 
 /// 🌳 Keep your project directory trees in shape!
 #[derive(Parser, Debug)]
@@ -73,9 +77,11 @@ fn setup_cli() -> Cli {
 fn main() {
     setup_cli();
 
-    trace!("trace");
-    debug!("debug");
-    info!("{}", forestry::GREETING);
-    warn!("warn");
-    error!("error");
+    let project_dir = env::current_dir().expect("current directory should be accessible");
+    let config_file =
+        Config::find(&project_dir).expect("current directory should contain a config file");
+    info!("config file: {:?}", config_file);
+
+    let config = Config::load(&config_file).expect("config file should be loadable");
+    info!("config: {:#?}", config);
 }

@@ -1,0 +1,4 @@
+[formatters.rust]
+program = "rustfmt"
+args = ["--edition=2021"]
+patterns = ["*.rs"]
