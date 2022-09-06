@@ -8,4 +8,4 @@ permissions: {}
 
 jobs:
   rust_workflow:
-    uses: jessestricker/gh-actions/workflows/rust/checks.yml@main
+    uses: jessestricker/gh-actions/.github/workflows/rust-checks.yml@main
