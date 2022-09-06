@@ -13,7 +13,8 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - uses: dtolnay/rust-toolchain@2cf09e8f1198bcd8e90a4235d76012dd00eee471 # 1.63.0
+      - uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+        with: { toolchain: stable }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
       - run: cargo test --all-targets --locked --verbose
@@ -23,8 +24,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - uses: dtolnay/rust-toolchain@2cf09e8f1198bcd8e90a4235d76012dd00eee471 # 1.63.0
-        with: { components: clippy }
+      - uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+        with: { toolchain: stable, components: clippy }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
       - run: cargo clippy --all-targets --locked --verbose -- --deny warnings
@@ -34,8 +35,8 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - uses: dtolnay/rust-toolchain@2cf09e8f1198bcd8e90a4235d76012dd00eee471 # 1.63.0
-        with: { components: rustfmt }
+      - uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+        with: { toolchain: stable, components: rustfmt }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
       - run: cargo fmt --check --all --verbose -- --verbose
