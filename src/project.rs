@@ -1,9 +1,11 @@
 use std::env;
 use std::path::PathBuf;
 
+use ignore::WalkBuilder;
+use log::error;
 use thiserror::Error;
 
-use crate::config::Config;
+use crate::config::{Config, Formatter};
 
 #[derive(Debug)]
 pub struct Project {
@@ -21,6 +23,18 @@ pub enum LoadError {
 
     #[error("failed to get the current working directory")]
     CwdNotAccessible,
+}
+
+#[derive(Error, Debug)]
+pub enum RunError {
+    #[error("the file patterns are invalid")]
+    InvalidPattern(#[from] globset::Error),
+    #[error("failed to iterate the project directory")]
+    IterationFailed(#[from] ignore::Error),
+    #[error("failed to start the formatter")]
+    FormatterStart(std::io::Error),
+    #[error("failed to run the formatter")]
+    FormatterFailed,
 }
 
 impl Project {
@@ -44,13 +58,45 @@ impl Project {
         }
         .ok_or(LoadError::NoConfigFile)
     }
-}
 
-#[derive(Error, Debug)]
-pub enum RunError {}
+    pub fn run(self) -> bool {
+        let mut all_formatters_succeeded = true;
+        for (name, fmt) in &self.config.formatters {
+            let result = self.run_formatter(fmt);
+            if let Err(err) = result {
+                error!("formatter '{}' failed:\n{:?}", name, &err);
+                all_formatters_succeeded = false;
+            }
+        }
+        all_formatters_succeeded
+    }
 
-impl Project {
-    pub fn run(&self) {
-        todo!()
+    pub fn run_formatter(&self, fmt: &Formatter) -> Result<(), RunError> {
+        // get iterator of files matching the patterns
+        let glob_set = fmt.glob_set()?;
+        let files_iter = WalkBuilder::new(&self.root_dir)
+            .hidden(false)
+            .ignore(false)
+            .build()
+            .filter_map(|dir_entry| {
+                let dir_entry = dir_entry.ok()?;
+                let rel_path = dir_entry
+                    .path()
+                    .strip_prefix(&self.root_dir)
+                    .expect("dir entry path should be in project path");
+                glob_set.is_match(rel_path).then_some(dir_entry.into_path())
+            });
+
+        // build command
+        let mut cmd = fmt.new_command();
+        cmd.current_dir(&self.root_dir).args(files_iter);
+
+        // run command
+        let status = cmd.status().map_err(RunError::FormatterStart)?;
+        if status.success() {
+            Ok(())
+        } else {
+            Err(RunError::FormatterFailed)
+        }
     }
 }

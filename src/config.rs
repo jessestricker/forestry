@@ -1,7 +1,9 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
+use std::process::Command;
 
+use globset::{Glob, GlobSet, GlobSetBuilder};
 use serde::Deserialize;
 use thiserror::Error;
 
@@ -60,4 +62,22 @@ pub struct Formatter {
     pub env: BTreeMap<String, String>,
 
     pub patterns: Vec<String>,
+}
+
+impl Formatter {
+    pub fn glob_set(&self) -> Result<GlobSet, globset::Error> {
+        let mut glob_set = GlobSetBuilder::new();
+        for pattern in &self.patterns {
+            glob_set.add(Glob::new(pattern)?);
+        }
+        glob_set.build()
+    }
+
+    /// Returns a new command with the program name, arguments and environment variables preset.
+    pub fn new_command(&self) -> Command {
+        let mut cmd = Command::new(&self.program);
+        cmd.args(&self.args);
+        cmd.envs(&self.env);
+        cmd
+    }
 }

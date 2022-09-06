@@ -2,7 +2,7 @@ use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use anyhow::Context;
+use anyhow::{anyhow, Context};
 use clap::{ArgAction, Args, Parser, ValueEnum};
 use log::{error, trace};
 
@@ -70,9 +70,9 @@ fn setup_cli() -> Cli {
     let args: Cli = Cli::parse();
     env_logger::Builder::new()
         .filter_level(args.logger_config.level_filter())
-        .write_style(args.logger_config.write_style())
-        .format_timestamp(None)
         .format_target(false)
+        .format_timestamp(None)
+        .write_style(args.logger_config.write_style())
         .init();
     args
 }
@@ -83,6 +83,10 @@ fn try_main() -> anyhow::Result<()> {
 
     let project = Project::load(cli.root_dir).context("failed to load project")?;
     trace!("project = {:#?}", &project);
+
+    if !project.run() {
+        return Err(anyhow!("something failed"));
+    }
 
     Ok(())
 }
