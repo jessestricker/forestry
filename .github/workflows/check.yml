@@ -13,7 +13,7 @@ jobs:
     runs-on: ${{ matrix.runner }}
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+      - uses: dtolnay/rust-toolchain@1ce4a7352a1efe5dede2e52c75512b34256e4f44 # master
         with: { toolchain: stable }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
@@ -24,7 +24,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+      - uses: dtolnay/rust-toolchain@1ce4a7352a1efe5dede2e52c75512b34256e4f44 # master
         with: { toolchain: stable, components: clippy }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
@@ -35,7 +35,7 @@ jobs:
     runs-on: ubuntu-22.04
     steps:
       - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
-      - uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+      - uses: dtolnay/rust-toolchain@1ce4a7352a1efe5dede2e52c75512b34256e4f44 # master
         with: { toolchain: stable, components: rustfmt }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
