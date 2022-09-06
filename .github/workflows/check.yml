@@ -7,8 +7,8 @@ on:
 permissions: {}
 
 jobs:
-  test:
-    name: Test
+  build_and_test:
+    name: Build & Test
     strategy:
       matrix:
         runner: [ubuntu-22.04, windows-2022, macos-12]
@@ -19,6 +19,7 @@ jobs:
         with: { toolchain: stable }
       - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
 
+      - run: cargo build --all-targets --locked --verbose
       - run: cargo test --all-targets --locked --verbose
 
   lint:
