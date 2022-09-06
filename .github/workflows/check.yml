@@ -1,0 +1,41 @@
+name: Check
+
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+
+jobs:
+  test:
+    name: Test
+    strategy:
+      matrix:
+        runner: [ubuntu-22.04, windows-2022, macos-12]
+    runs-on: ${{ matrix.runner }}
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - uses: dtolnay/rust-toolchain@2cf09e8f1198bcd8e90a4235d76012dd00eee471 # 1.63.0
+      - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+
+      - run: cargo test --all-targets --locked --verbose
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - uses: dtolnay/rust-toolchain@2cf09e8f1198bcd8e90a4235d76012dd00eee471 # 1.63.0
+        with: { components: clippy }
+      - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+
+      - run: cargo clippy --all-targets --locked --verbose -- --deny warnings
+
+  format:
+    name: Format
+    runs-on: ubuntu-22.04
+    steps:
+      - uses: actions/checkout@2541b1294d2704b0964813337f33b291d3f8596b # v3.0.2
+      - uses: dtolnay/rust-toolchain@2cf09e8f1198bcd8e90a4235d76012dd00eee471 # 1.63.0
+        with: { components: rustfmt }
+      - uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+
+      - run: cargo fmt --check --all --verbose -- --verbose
