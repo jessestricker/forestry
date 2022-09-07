@@ -1,0 +1,12 @@
+name: Checks
+
+on:
+  push: { branches: [main] }
+  pull_request: { branches: [main] }
+
+permissions: {}
+
+jobs:
+  rust:
+    name: Rust
+    uses: jessestricker/gh-actions/.github/workflows/rust-checks.yml@v0.1.0
