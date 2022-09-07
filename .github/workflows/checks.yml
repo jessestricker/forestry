@@ -9,4 +9,4 @@ permissions: {}
 jobs:
   rust:
     name: Rust
-    uses: jessestricker/gh-actions/.github/workflows/rust-checks.yml@main
+    uses: jessestricker/gh-actions/.github/workflows/rust-checks.yml@v0.1.0
