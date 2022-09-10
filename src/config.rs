@@ -1,24 +1,37 @@
 use std::collections::BTreeMap;
 use std::fs;
 use std::path::{Path, PathBuf};
-use std::process::Command;
 
-use globset::{Glob, GlobSet, GlobSetBuilder};
 use serde::Deserialize;
 use thiserror::Error;
 
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    pub formatters: BTreeMap<String, Formatter>,
+    pub formatters: BTreeMap<String, FormatterConfig>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct FormatterConfig {
+    pub program: String,
+
+    #[serde(default)]
+    pub args: Vec<String>,
+
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
+
+    pub patterns: Vec<String>,
 }
 
 #[derive(Error, Debug)]
 pub enum LoadError {
     #[error("failed to read file")]
-    ReadFile(#[from] std::io::Error),
-    #[error("failed to parse TOML")]
-    ParseToml(#[from] toml::de::Error),
+    ReadFailed(#[from] std::io::Error),
+
+    #[error("file contains invalid TOML")]
+    InvalidToml(#[from] toml::de::Error),
 }
 
 impl Config {
@@ -47,37 +60,5 @@ impl Config {
             let file = dir.join(file_name);
             file.is_file().then_some(file)
         })
-    }
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(deny_unknown_fields)]
-pub struct Formatter {
-    pub program: String,
-
-    #[serde(default)]
-    pub args: Vec<String>,
-
-    #[serde(default)]
-    pub env: BTreeMap<String, String>,
-
-    pub patterns: Vec<String>,
-}
-
-impl Formatter {
-    pub fn glob_set(&self) -> Result<GlobSet, globset::Error> {
-        let mut glob_set = GlobSetBuilder::new();
-        for pattern in &self.patterns {
-            glob_set.add(Glob::new(pattern)?);
-        }
-        glob_set.build()
-    }
-
-    /// Returns a new command with the program name, arguments and environment variables preset.
-    pub fn new_command(&self) -> Command {
-        let mut cmd = Command::new(&self.program);
-        cmd.args(&self.args);
-        cmd.envs(&self.env);
-        cmd
     }
 }

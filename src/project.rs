@@ -1,16 +1,20 @@
 use std::env;
 use std::path::PathBuf;
 
+use globset::Candidate;
+use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
-use log::error;
+use log::{debug, error, trace, warn};
 use thiserror::Error;
 
-use crate::config::{Config, Formatter};
+use crate::config;
+use crate::config::Config;
+use crate::runner::Runner;
 
 #[derive(Debug)]
 pub struct Project {
     root_dir: PathBuf,
-    config: Config,
+    runners: Vec<Runner>,
 }
 
 #[derive(Error, Debug)]
@@ -19,29 +23,35 @@ pub enum LoadError {
     NoConfigFile,
 
     #[error("could not load config file")]
-    ConfigFileLoad(#[from] crate::config::LoadError),
+    ConfigFileLoad(#[from] config::LoadError),
+
+    #[error("invalid glob pattern found")]
+    InvalidGlob(#[from] globset::Error),
 
     #[error("failed to get the current working directory")]
     CwdNotAccessible,
 }
 
-#[derive(Error, Debug)]
-pub enum RunError {
-    #[error("the file patterns are invalid")]
-    InvalidPattern(#[from] globset::Error),
-    #[error("failed to iterate the project directory")]
-    IterationFailed(#[from] ignore::Error),
-    #[error("failed to start the formatter")]
-    FormatterStart(std::io::Error),
-    #[error("failed to run the formatter")]
-    FormatterFailed,
-}
-
 impl Project {
     pub fn load(root_dir: Option<PathBuf>) -> Result<Project, LoadError> {
+        // load config file
         let (root_dir, config_file) = Self::find_config(root_dir)?;
         let config = Config::load(&config_file)?;
-        Ok(Project { root_dir, config })
+
+        trace!("root dir = {:?}", root_dir);
+        trace!("config = {:?}", config);
+
+        // build runners for configured formatters
+        let formatters: Vec<Runner> = config
+            .formatters
+            .into_iter()
+            .map(|(name, fmt)| Runner::from_formatter(name, fmt))
+            .collect::<Result<_, globset::Error>>()?;
+
+        Ok(Project {
+            root_dir,
+            runners: formatters,
+        })
     }
 
     fn find_config(root_dir: Option<PathBuf>) -> Result<(PathBuf, PathBuf), LoadError> {
@@ -60,43 +70,89 @@ impl Project {
     }
 
     pub fn run(self) -> bool {
-        let mut all_formatters_succeeded = true;
-        for (name, fmt) in &self.config.formatters {
-            let result = self.run_formatter(fmt);
-            if let Err(err) = result {
-                error!("formatter '{}' failed:\n{:?}", name, &err);
-                all_formatters_succeeded = false;
+        let partitions = self.match_runners();
+        let mut all_runners_succeeded = true;
+        for (runner, files) in partitions {
+            debug!("### {}:\n{:#?}", runner.name(), files);
+
+            let res = runner.run(&self.root_dir, files);
+            if let Err(err) = res {
+                all_runners_succeeded = false;
+                warn!("formatter {} failed to run: {:?}", runner.name(), err);
             }
         }
-        all_formatters_succeeded
+        all_runners_succeeded
     }
 
-    pub fn run_formatter(&self, fmt: &Formatter) -> Result<(), RunError> {
-        // get iterator of files matching the patterns
-        let glob_set = fmt.glob_set()?;
-        let files_iter = WalkBuilder::new(&self.root_dir)
-            .hidden(false)
-            .ignore(false)
+    /// Walks the whole project directory tree recursively
+    /// and partitions it by matching files against the runners' patterns.
+    fn match_runners(&self) -> Vec<Partition> {
+        // create empty groups for each runner
+        let mut partitions: Vec<Partition> = (self.runners.iter())
+            .map(|runner| (runner, Vec::new()))
+            .collect();
+
+        let git_dir_override = OverrideBuilder::new(&self.root_dir)
+            .add("!/.git/")
+            .unwrap()
             .build()
-            .filter_map(|dir_entry| {
-                let dir_entry = dir_entry.ok()?;
-                let rel_path = dir_entry
-                    .path()
-                    .strip_prefix(&self.root_dir)
-                    .expect("dir entry path should be in project path");
-                glob_set.is_match(rel_path).then_some(dir_entry.into_path())
-            });
+            .unwrap();
 
-        // build command
-        let mut cmd = fmt.new_command();
-        cmd.current_dir(&self.root_dir).args(files_iter);
+        // walk the project directory tree
+        let walk = WalkBuilder::new(&self.root_dir)
+            .overrides(git_dir_override)
+            .ignore(false)
+            .hidden(false)
+            .build();
+        for entry in walk {
+            let entry = match entry {
+                Ok(entry) => entry,
+                Err(error) => {
+                    warn!("skipping directory entry, cause: {}", error);
+                    continue;
+                }
+            };
 
-        // run command
-        let status = cmd.status().map_err(RunError::FormatterStart)?;
-        if status.success() {
-            Ok(())
-        } else {
-            Err(RunError::FormatterFailed)
+            // skip directories
+            let entry_type = entry.file_type().expect("entry should not be stdin");
+            if entry_type.is_dir() {
+                continue;
+            }
+
+            let path = entry.path();
+            let rel_path = path.strip_prefix(&self.root_dir).unwrap();
+            let rel_path_candidate = Candidate::new(rel_path);
+
+            // match each file against the glob sets of each partition's runner:
+            //   if the file matches no glob sets, print a warning
+            //   if the file matches exactly one glob set, add it to that partition
+            //   if the file matches multiple glob sets, print a warning
+
+            let mut matched_runner_files: Option<&mut Vec<PathBuf>> = None;
+            for (runner, paths) in &mut partitions {
+                let is_match = runner.glob_set().is_match_candidate(&rel_path_candidate);
+                if is_match {
+                    if matched_runner_files.is_none() {
+                        matched_runner_files = Some(paths);
+                    } else {
+                        warn!(
+                            "file {} is already matched by another runner, using only the first",
+                            rel_path.display()
+                        );
+                        break;
+                    }
+                }
+            }
+
+            if let Some(files) = matched_runner_files {
+                files.push(entry.into_path());
+            } else {
+                warn!("file {} is not matched by any runner", rel_path.display());
+            }
         }
+
+        partitions
     }
 }
+
+type Partition<'a> = (&'a Runner, Vec<PathBuf>);

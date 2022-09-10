@@ -2,7 +2,7 @@ use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
 
-use anyhow::{anyhow, Context};
+use anyhow::Context;
 use clap::{ArgAction, Args, Parser, ValueEnum};
 use log::{error, trace};
 
@@ -77,29 +77,28 @@ fn setup_cli() -> Cli {
     args
 }
 
-fn try_main() -> anyhow::Result<()> {
+fn try_main() -> anyhow::Result<bool> {
     let cli = setup_cli();
     trace!("cli = {:#?}", &cli);
 
     let project = Project::load(cli.root_dir).context("failed to load project")?;
-    trace!("project = {:#?}", &project);
+    let success = project.run();
 
-    if !project.run() {
-        return Err(anyhow!("something failed"));
-    }
-
-    Ok(())
+    Ok(success)
 }
 
 fn main() -> ExitCode {
-    if let Err(err) = try_main() {
-        let mut err_msg = err.to_string();
-        err.chain().skip(1).for_each(|source| {
-            write!(err_msg, "\ncause: {}", source).unwrap();
-        });
+    match try_main() {
+        Ok(true) => ExitCode::SUCCESS,
+        Ok(false) => ExitCode::FAILURE,
+        Err(err) => {
+            let mut err_msg = err.to_string();
+            err.chain().skip(1).for_each(|source| {
+                write!(err_msg, "\ncause: {}", source).unwrap();
+            });
 
-        error!("{}", err_msg);
-        return ExitCode::FAILURE;
+            error!("{}", err_msg);
+            ExitCode::FAILURE
+        }
     }
-    ExitCode::SUCCESS
 }
