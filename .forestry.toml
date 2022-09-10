@@ -1,4 +1,18 @@
+[global]
+ignores = [".gitignore", "Cargo.lock", "LICENSE"]
+
+[formatters.markup]
+program = "prettier"
+shell = true
+args = ["--write", "--loglevel=warn"]
+patterns = ["*.md", "*.yml"]
+
 [formatters.rust]
 program = "rustfmt"
 args = ["--edition=2021"]
 patterns = ["*.rs"]
+
+[formatters.toml]
+program = "taplo"
+args = ["format"]
+patterns = ["*.toml"]

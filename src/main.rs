@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -68,34 +69,44 @@ impl LoggerConfig {
 
 fn setup_cli() -> Cli {
     let args: Cli = Cli::parse();
+
+    let log_level = args.logger_config.level_filter();
+    // extern crates log at `warn` or less verbose
+    let extern_crate_log_level = min(log_level, log::LevelFilter::Warn);
+
     env_logger::Builder::new()
-        .filter_level(args.logger_config.level_filter())
-        .write_style(args.logger_config.write_style())
-        .format_timestamp(None)
+        .filter(None, extern_crate_log_level) // specify for all modules
+        .filter(Some("forestry"), log_level) // override for `forestry`
         .format_target(false)
+        .format_timestamp(None)
+        .write_style(args.logger_config.write_style())
         .init();
+
     args
 }
 
-fn try_main() -> anyhow::Result<()> {
+fn try_main() -> anyhow::Result<bool> {
     let cli = setup_cli();
     trace!("cli = {:#?}", &cli);
 
     let project = Project::load(cli.root_dir).context("failed to load project")?;
-    trace!("project = {:#?}", &project);
+    let success = project.run();
 
-    Ok(())
+    Ok(success)
 }
 
 fn main() -> ExitCode {
-    if let Err(err) = try_main() {
-        let mut err_msg = err.to_string();
-        err.chain().skip(1).for_each(|source| {
-            write!(err_msg, "\ncause: {}", source).unwrap();
-        });
+    match try_main() {
+        Ok(true) => ExitCode::SUCCESS,
+        Ok(false) => ExitCode::FAILURE,
+        Err(err) => {
+            let mut err_msg = err.to_string();
+            err.chain().skip(1).for_each(|source| {
+                write!(err_msg, "\ncause: {}", source).unwrap();
+            });
 
-        error!("{}", err_msg);
-        return ExitCode::FAILURE;
+            error!("{}", err_msg);
+            ExitCode::FAILURE
+        }
     }
-    ExitCode::SUCCESS
 }

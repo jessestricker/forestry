@@ -8,15 +8,42 @@ use thiserror::Error;
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
-    pub formatters: BTreeMap<String, Formatter>,
+    #[serde(default)]
+    pub global: GlobalConfig,
+    pub formatters: BTreeMap<String, FormatterConfig>,
+}
+
+#[derive(Deserialize, Default, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct GlobalConfig {
+    #[serde(default)]
+    pub ignores: Vec<String>,
+}
+
+#[derive(Deserialize, Debug)]
+#[serde(deny_unknown_fields)]
+pub struct FormatterConfig {
+    pub program: String,
+
+    #[serde(default)]
+    pub shell: bool,
+
+    #[serde(default)]
+    pub args: Vec<String>,
+
+    #[serde(default)]
+    pub env: BTreeMap<String, String>,
+
+    pub patterns: Vec<String>,
 }
 
 #[derive(Error, Debug)]
 pub enum LoadError {
     #[error("failed to read file")]
-    ReadFile(#[from] std::io::Error),
-    #[error("failed to parse TOML")]
-    ParseToml(#[from] toml::de::Error),
+    ReadFailed(#[from] std::io::Error),
+
+    #[error("file contains invalid TOML")]
+    InvalidToml(#[from] toml::de::Error),
 }
 
 impl Config {
@@ -46,18 +73,4 @@ impl Config {
             file.is_file().then_some(file)
         })
     }
-}
-
-#[derive(Deserialize, Debug)]
-#[serde(deny_unknown_fields)]
-pub struct Formatter {
-    pub program: String,
-
-    #[serde(default)]
-    pub args: Vec<String>,
-
-    #[serde(default)]
-    pub env: BTreeMap<String, String>,
-
-    pub patterns: Vec<String>,
 }
