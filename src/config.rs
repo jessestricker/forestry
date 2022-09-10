@@ -8,11 +8,12 @@ use thiserror::Error;
 #[derive(Deserialize, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct Config {
+    #[serde(default)]
     pub global: GlobalConfig,
     pub formatters: BTreeMap<String, FormatterConfig>,
 }
 
-#[derive(Deserialize, Debug)]
+#[derive(Deserialize, Default, Debug)]
 #[serde(deny_unknown_fields)]
 pub struct GlobalConfig {
     #[serde(default)]
