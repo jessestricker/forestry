@@ -16,6 +16,7 @@ pub struct Runner {
     glob_set: GlobSet,
 
     program: String,
+    shell: bool,
     args: Vec<String>,
     env: HashMap<String, String>,
 }
@@ -56,6 +57,7 @@ impl Runner {
             name,
             glob_set: Self::build_glob_set(fmt.patterns)?,
             program: fmt.program,
+            shell: fmt.shell,
             args: fmt.args,
             env: fmt.env.into_iter().collect(),
         };
@@ -78,10 +80,15 @@ impl Runner {
         I: IntoIterator<Item = S>,
         S: AsRef<OsStr>,
     {
-        let mut cmd = Command::new(self.program());
+        // build command
+        let mut cmd = if self.shell {
+            self.new_shell_cmd()
+        } else {
+            Command::new(&self.program)
+        };
         cmd.current_dir(working_dir);
-        cmd.envs(self.env());
-        cmd.args(self.args());
+        cmd.envs(&self.env);
+        cmd.args(&self.args);
         cmd.args(paths);
 
         debug!("(runner {}) executing {:?}", self.name, cmd);
@@ -93,6 +100,20 @@ impl Runner {
         } else {
             Ok(())
         }
+    }
+
+    #[cfg(windows)]
+    fn new_shell_cmd(&self) -> Command {
+        let mut cmd = Command::new("cmd.exe");
+        cmd.args(["/c", &self.program]);
+        cmd
+    }
+
+    #[cfg(unix)]
+    fn new_shell_cmd(&self) -> Command {
+        let mut cmd = Command::new("sh");
+        cmd.args(["-c", &self.program]);
+        cmd
     }
 
     pub fn name(&self) -> &str {

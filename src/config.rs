@@ -17,6 +17,9 @@ pub struct FormatterConfig {
     pub program: String,
 
     #[serde(default)]
+    pub shell: bool,
+
+    #[serde(default)]
     pub args: Vec<String>,
 
     #[serde(default)]
