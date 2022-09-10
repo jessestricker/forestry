@@ -42,8 +42,8 @@ impl Ord for Runner {
 
 #[derive(Error, Debug)]
 pub enum Error {
-    #[error("failed to execute the runner")]
-    ExecFailed,
+    #[error(transparent)]
+    ExecFailed(std::io::Error),
 
     #[error("executed program did not exit successfully")]
     ProgramFailed,
@@ -85,7 +85,7 @@ impl Runner {
         cmd.args(paths);
 
         debug!("(runner {}) executing {:?}", self.name, cmd);
-        let status = cmd.status().map_err(|_| Error::ExecFailed)?;
+        let status = cmd.status().map_err(Error::ExecFailed)?;
 
         debug!("(runner {}) status of last command {:?}", self.name, status);
         if !status.success() {
