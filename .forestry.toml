@@ -2,3 +2,9 @@
 program = "rustfmt"
 args = ["--edition=2021"]
 patterns = ["*.rs"]
+
+[formatters.prettier]
+program = "prettier"
+shell = true
+args = ["--write", "--loglevel=warn"]
+patterns = ["*.md", "*.yml"]
