@@ -1,3 +1,4 @@
+use std::cmp::min;
 use std::fmt::Write as _;
 use std::path::PathBuf;
 use std::process::ExitCode;
@@ -68,12 +69,19 @@ impl LoggerConfig {
 
 fn setup_cli() -> Cli {
     let args: Cli = Cli::parse();
+
+    let log_level = args.logger_config.level_filter();
+    // extern crates log at `warn` or less verbose
+    let extern_crate_log_level = min(log_level, log::LevelFilter::Warn);
+
     env_logger::Builder::new()
-        .filter_level(args.logger_config.level_filter())
+        .filter(None, extern_crate_log_level) // specify for all modules
+        .filter(Some("forestry"), log_level) // override for `forestry`
         .format_target(false)
         .format_timestamp(None)
         .write_style(args.logger_config.write_style())
         .init();
+
     args
 }
 
