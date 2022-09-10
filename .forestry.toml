@@ -1,3 +1,6 @@
+[global]
+ignores = [".gitignore", "Cargo.lock", "LICENSE"]
+
 [formatters.markup]
 program = "prettier"
 shell = true
