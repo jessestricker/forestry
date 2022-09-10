@@ -5,7 +5,7 @@ use std::path::Path;
 use std::process::Command;
 
 use globset::{Glob, GlobSet, GlobSetBuilder};
-use log::debug;
+use log::trace;
 use thiserror::Error;
 
 use crate::config::FormatterConfig;
@@ -91,10 +91,12 @@ impl Runner {
         cmd.args(&self.args);
         cmd.args(paths);
 
-        debug!("(runner {}) executing {:?}", self.name, cmd);
+        // execute command
+        trace!("(runner {}) executing {:?}", self.name, cmd);
         let status = cmd.status().map_err(Error::ExecFailed)?;
 
-        debug!("(runner {}) status of last command {:?}", self.name, status);
+        // inspect command result
+        trace!("(runner {}) status of last command {:?}", self.name, status);
         if !status.success() {
             Err(Error::ProgramFailed)
         } else {
