@@ -4,11 +4,12 @@ use std::ffi::OsStr;
 use std::path::Path;
 use std::process::Command;
 
-use globset::{Glob, GlobSet, GlobSetBuilder};
+use globset::GlobSet;
 use log::trace;
 use thiserror::Error;
 
 use crate::config::FormatterConfig;
+use crate::util;
 
 #[derive(Debug)]
 pub struct Runner {
@@ -55,23 +56,13 @@ impl Runner {
     pub fn from_formatter(name: String, fmt: FormatterConfig) -> Result<Self, globset::Error> {
         let runner = Self {
             name,
-            glob_set: Self::build_glob_set(fmt.patterns)?,
+            glob_set: util::glob_set_from_iter(fmt.patterns)?,
             program: fmt.program,
             shell: fmt.shell,
             args: fmt.args,
             env: fmt.env.into_iter().collect(),
         };
         Ok(runner)
-    }
-
-    fn build_glob_set<I: IntoIterator<Item = S>, S: AsRef<str>>(
-        patterns: I,
-    ) -> Result<GlobSet, globset::Error> {
-        let mut builder = GlobSetBuilder::new();
-        for pattern in patterns {
-            builder.add(Glob::new(pattern.as_ref())?);
-        }
-        builder.build()
     }
 
     /// Executes the runner once in a specific directory for a set of paths.

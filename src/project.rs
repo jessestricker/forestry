@@ -1,20 +1,21 @@
 use std::env;
 use std::path::PathBuf;
 
-use globset::Candidate;
+use globset::{Candidate, GlobSet};
 use ignore::overrides::OverrideBuilder;
 use ignore::WalkBuilder;
 use log::{debug, error, trace, warn};
 use thiserror::Error;
 
-use crate::config;
 use crate::config::Config;
 use crate::runner::Runner;
+use crate::{config, util};
 
 #[derive(Debug)]
 pub struct Project {
     root_dir: PathBuf,
     runners: Vec<Runner>,
+    global_ignores: GlobSet,
 }
 
 #[derive(Error, Debug)]
@@ -42,15 +43,18 @@ impl Project {
         trace!("config = {:?}", config);
 
         // build runners for configured formatters
-        let formatters: Vec<Runner> = config
+        let runners: Vec<Runner> = config
             .formatters
             .into_iter()
             .map(|(name, fmt)| Runner::from_formatter(name, fmt))
             .collect::<Result<_, globset::Error>>()?;
 
+        let global_ignores = util::glob_set_from_iter(config.global.ignores)?;
+
         Ok(Project {
             root_dir,
-            runners: formatters,
+            runners,
+            global_ignores,
         })
     }
 
@@ -122,6 +126,11 @@ impl Project {
             let path = entry.path();
             let rel_path = path.strip_prefix(&self.root_dir).unwrap();
             let rel_path_candidate = Candidate::new(rel_path);
+
+            // skip global ignores
+            if self.global_ignores.is_match_candidate(&rel_path_candidate) {
+                continue;
+            }
 
             // match each file against the glob sets of each partition's runner:
             //   if the file matches no glob sets, print a warning
