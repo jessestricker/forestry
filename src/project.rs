@@ -78,7 +78,7 @@ impl Project {
             let res = runner.run(&self.root_dir, files);
             if let Err(err) = res {
                 all_runners_succeeded = false;
-                warn!("formatter {} failed to run: {}", runner.name(), err);
+                error!("formatter {} failed to run: {}", runner.name(), err);
             }
         }
         all_runners_succeeded
