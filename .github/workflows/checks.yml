@@ -6,7 +6,71 @@ on:
 
 permissions: {}
 
+env:
+  CARGO_TERM_COLOR: always
+
 jobs:
-  rust:
-    name: Rust
-    uses: jessestricker/gh-actions/.github/workflows/rust-checks.yml@v0.1.0
+  build_and_test:
+    name: Build & Test
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+        with:
+          toolchain: stable
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+
+      - name: Setup rustc problem matcher
+        uses: jessestricker/gh-actions/actions/setup-rustc-problem-matcher@main
+
+      - name: Build
+        run: cargo build --all-features --locked --verbose
+
+      - name: Test
+        run: cargo test --all-features --locked --verbose
+
+  lint:
+    name: Lint
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+        with:
+          toolchain: stable
+          components: clippy
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+
+      - name: Setup rustc problem matcher
+        uses: jessestricker/gh-actions/actions/setup-rustc-problem-matcher@main
+
+      - name: Lint
+        run: cargo clippy --all-features --locked --verbose -- --deny warnings
+
+  format:
+    name: Format
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v3
+
+      - name: Install Rust toolchain
+        uses: dtolnay/rust-toolchain@0f2a41247f0cbad73dfdcf76a755e952ccdd5628 # master
+        with:
+          toolchain: stable
+          components: rustfmt
+
+      - name: Setup Rust cache
+        uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+
+      - name: Format
+        run: cargo fmt --check --all --verbose -- --verbose
