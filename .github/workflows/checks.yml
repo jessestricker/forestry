@@ -24,7 +24,7 @@ jobs:
         uses: dtolnay/rust-toolchain@1.63.0
 
       - name: Setup Rust cache
-        uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # v2.0.0
 
       - name: Setup rustc problem matcher
         uses: jessestricker/gh-actions/actions/setup-rustc-problem-matcher@3b1e90fd7be856b658171f0a643a034a55b73230 # v0.1.0
@@ -47,7 +47,7 @@ jobs:
         with: { components: clippy }
 
       - name: Setup Rust cache
-        uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # v2.0.0
 
       - name: Setup rustc problem matcher
         uses: jessestricker/gh-actions/actions/setup-rustc-problem-matcher@3b1e90fd7be856b658171f0a643a034a55b73230 # v0.1.0
@@ -67,7 +67,7 @@ jobs:
         with: { components: rustfmt }
 
       - name: Setup Rust cache
-        uses: Swatinem/rust-cache@6720f05bc48b77f96918929a9019fb2203ff71f8 # v2.0.0
+        uses: Swatinem/rust-cache@22c9328bcba27aa81a32b1bef27c7e3c78052531 # v2.0.0
 
       - name: Format
         run: cargo fmt --check --all --verbose -- --verbose
