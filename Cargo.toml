@@ -4,7 +4,7 @@ version = "0.1.0"
 authors = ["Jesse Stricker"]
 edition = "2021"
 # keep MSRV in sync with /.github/workflows/rust-check.yml
-rust-version = "1.56"
+rust-version = "1.62"
 description = "🌳 Keep your project directory trees in shape!"
 homepage = "https://github.com/jessestricker/forestry"
 repository = "https://github.com/jessestricker/forestry"
@@ -13,12 +13,12 @@ categories = ["command-line-utilities", "development-tools"]
 publish = false
 
 [dependencies]
-anyhow = "1.0.65"
-clap = { version = "3.2.22", features = ["derive"] }
-env_logger = "0.9.1"
+anyhow = "1.0.66"
+clap = { version = "4.0.27", features = ["derive", "deprecated"] }
+env_logger = "0.10.0"
 globset = "0.4.9"
 ignore = "0.4.18"
 log = "0.4.17"
-serde = { version = "1.0.144", features = ["derive"] }
-thiserror = "1.0.35"
+serde = { version = "1.0.147", features = ["derive"] }
+thiserror = "1.0.37"
 toml = "0.5.9"

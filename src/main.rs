@@ -11,26 +11,26 @@ use forestry::project::Project;
 
 /// 🌳 Keep your project directory trees in shape!
 #[derive(Parser, Debug)]
-#[clap(version, author)]
+#[command(version, author)]
 struct Cli {
     root_dir: Option<PathBuf>,
 
-    #[clap(flatten)]
+    #[command(flatten)]
     logger_config: LoggerConfig,
 }
 
 #[derive(Args, Debug)]
 struct LoggerConfig {
     /// Increase the logging level with each occurrence.
-    #[clap(action=ArgAction::Count, short = 'v', long = "verbose")]
+    #[arg(action = ArgAction::Count, short, long)]
     verbose: u8,
 
     /// Decrease the logging level with each occurrence.
-    #[clap(action=ArgAction::Count, short = 'q', long = "quiet")]
+    #[arg(action = ArgAction::Count, short, long)]
     quiet: u8,
 
     /// Set whether the terminal output includes color.
-    #[clap(long = "color", value_enum, default_value_t)]
+    #[arg(long, value_enum, default_value_t)]
     color: ColorMode,
 }
 
